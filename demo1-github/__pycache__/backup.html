@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Immigration Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            overflow-x:  hidden;
+            background: #f4f6f9;
+        }
+
+        .sidebar {
+            background: #1e293b;
+            color: white;
+            padding: 20px;
+            height: 100%;
+        }
+
+        .main {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        button {
+            padding: 8px 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .chart-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        /* 🔥 Table container */
+        .table-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 0 auto;
+        }
+
+        /* 🔥 Equal spacing wrapper */
+        .table-wrapper {
+            padding: 0 20px;
+        }
+
+        table {
+            min-width: 1300px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        th {
+            background: #1e293b;
+            color: white;
+        }
+
+        tr:hover {
+            background: #f1f5f9;
+        }
+
+        /* Optional scrollbar styling */
+        .table-box::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        @media (max-width: 900px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid px-0">
+        <div class="row">
+
+            <div class="col-2">
+                <div class="sidebar">
+                    <h2>📊 Dashboard</h2>
+                    <p>Immigration</p>
+                </div>
+
+            </div>
+            <div class="col-10">
+
+
+                <div class="row">
+                    <div class="col-12">
+
+                        <div class="header">
+                            <h1>Immigration Overview</h1>
+                            <button onclick="loadEmployees()">Refresh</button>
+                        </div>
+
+
+
+                        <!-- Chart -->
+
+                    </div>
+                    <div class="col-12">
+                        <div class="cards w-100" id="summary"></div>
+                    </div>
+
+                    <!-- Table -->
+                     <div class="col-12 px-0">
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="chart-box">
+                                <canvas id="roleChart"></canvas>
+                            </div>
+
+                        </div>
+                        <div class="col-8">
+                            <div class="table-box">
+                                <div class="table-wrapper">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Emp ID</th>
+                                                <th>USCIS Receipt</th>
+                                                <th>LCA</th>
+                                                <th>I94 Number</th>
+                                                <th>I94 Expiry</th>
+                                                <th>I140 Number</th>
+                                                <th>I140 Priority</th>
+                                                <th>LCA Amount</th>
+                                                <th>Project</th>
+                                                <th>Comments</th>
+                                                <th>Wage Level</th>
+                                                <th>Max Out Date</th>
+                                                <th>GC Started</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="employeeTable"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            let chartInstance = null;
+
+            async function loadEmployees() {
+                try {
+                    const response = await fetch("http://127.0.0.1:8000/immigration");
+
+                    if (!response.ok) {
+                        throw new Error("API not working");
+                    }
+
+                    const data = await response.json();
+                    console.log("API:", data);
+
+                    const employees = data.employees;
+
+                    if (!employees || employees.length === 0) {
+                        alert("No data found");
+                        return;
+                    }
+
+                    // Summary
+                    let total = employees.length;
+                    let totalAmount = 0;
+                    let maxAmount = 0;
+                    let statusCount = {
+                    "Active": 0,
+                    "Expired": 0,
+                    "Expiring Soon": 0,
+                };
+
+                const today = new Date();
+
+                employees.forEach(emp => {
+                    let expiry = new Date(emp.I_94_Expiry_Date);
+
+                    let amt = Number(emp.LCA_Amount) || 0;
+                    totalAmount += amt;
+                    if (amt > maxAmount) maxAmount = amt;
+
+                    if (emp.GC_Started && emp.GC_Started !== "") {
+                        statusCount["Active"]++;
+                    } 
+                    else if (expiry < today) {
+                        statusCount["Expired"]++;
+                    } 
+                    else {
+                        let diffDays = (expiry - today) / (1000 * 60 * 60 * 24);
+
+                        if (diffDays <= 30) {
+                            statusCount["Expiring Soon"]++;
+                        }
+                        // } else {
+                        //     statusCount["Active"]++;
+                        // }
+                    }
+                });
+
+                    let avgAmount = (totalAmount / total).toFixed(2);
+
+                    document.getElementById("summary").innerHTML = `<div class="row">
+                <div class="col-3"><div class="card"><h3>Total Records</h3><p>${total}</p></div></div>
+                <div class="col-3"><div class="card"><h3>Avg LCA</h3><p>${avgAmount}</p></div></div>
+                <div class="col-3"><div class="card"><h3>Max LCA</h3><p>${maxAmount}</p></div></div>
+                <div class="col-3"><div class="card"><h3>Total LCA</h3><p>${totalAmount}</p></div></div></div>
+            
+            
+            
+            
+        `;
+
+                    // Chart
+                    const ctx = document.getElementById("roleChart");
+
+                    if (chartInstance) chartInstance.destroy();
+
+                   chartInstance = new Chart(ctx, {
+                    type: "pie",
+                    data: {
+                        labels: Object.keys(statusCount),
+                        datasets: [{
+                            data: Object.values(statusCount),
+                            backgroundColor: [
+                                "#22c55e",  // Green Card
+                                "#FF6347",  // Expired
+                                "#facc15",  // Expiring Soon
+                              //  "#3b82f6"   // Active
+                            ]
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            legend: {
+                                position: "bottom"
+                            }
+                        }
+                    }
+                });
+
+                    // Table
+                    const table = document.getElementById("employeeTable");
+                    table.innerHTML = "";
+
+                    employees.forEach(emp => {
+                        table.innerHTML += `
+                <tr>
+                    <td>${emp.Emp_Id || ""}</td>
+                    <td>${emp.USCIS_Receipt_Num || ""}</td>
+                    <td>${emp.LCA || ""}</td>
+                    <td>${emp.I_94_Num || ""}</td>
+                    <td>${emp.I_94_Expiry_Date || ""}</td>
+                    <td>${emp.I_140_Num || ""}</td>
+                    <td>${emp.I_140_Priority_Date || ""}</td>
+                    <td>${emp.LCA_Amount || "0"}</td>
+                    <td>${emp.Actual_Project || "-"}</td>
+                    <td>${emp.Immig_Comments || "-"}</td>
+                    <td>${emp.Wage_Level || "-"}</td>
+                    <td>${emp.Max_Out_Date || "-"}</td>
+                    <td>${emp.GC_Started || "-"}</td>
+                </tr>
+            `;
+                    });
+
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("Failed to load data");
+                }
+            }
+
+            window.onload = loadEmployees;
+        </script>
+
+    </div>
+</body>
+
+</html>

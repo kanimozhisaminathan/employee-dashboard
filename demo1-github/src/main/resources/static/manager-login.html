@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manager Login</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main class="login-shell">
+    <section class="login-panel">
+        <p class="eyebrow">Manager Portal</p>
+        <h1>Manager Login</h1>
+        <form class="login-form" data-role="manager" data-next="/manager-dashboard.html">
+            <label class="field">
+                <span>Approver ID</span>
+                <input name="userId" placeholder="MGR100" autocomplete="username" required>
+            </label>
+            <button class="primary" type="submit">Login</button>
+            <p class="form-message" data-message></p>
+        </form>
+        <a class="back-link" href="/">Back to role selection</a>
+    </section>
+</main>
+<script src="/login.js"></script>
+</body>
+</html>

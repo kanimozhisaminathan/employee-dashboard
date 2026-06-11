@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Work Authorization Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f6f9;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100vh;
+            background: #1e293b;
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 24px;
+            font-size: 1.35rem;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            width: calc(100% - 250px);
+            min-height: 100vh;
+        }
+
+        .menu-item {
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            line-height: 1.3;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            overflow-wrap: anywhere;
+        }
+
+        .menu-item:hover {
+            background: #334155;
+        }
+
+        .menu-item.active {
+            background: #3b82f6;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #1e293b;
+        }
+
+        .card p {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 0;
+            color: #3b82f6;
+        }
+
+        .chart-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #visaChart {
+            max-width: 260px !important;
+            max-height: 260px !important;
+        }
+
+        .top-row {
+            display: flex;
+            gap: 20px;
+            align-items: stretch;
+            margin-bottom: 20px;
+        }
+
+        .summary-col {
+            width: 30%;
+        }
+
+        .chart-col {
+            width: 70%;
+        }
+
+        .table-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background: #1e293b;
+            color: white;
+        }
+
+        td.upload-td {
+            white-space: nowrap;
+            min-width: 260px;
+        }
+
+        .upload-cell {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .upload-cell .file-name {
+            font-size: 0.75rem;
+            color: #64748b;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .upload-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 10px;
+            background: #f1f5f9;
+            border: 1px dashed #94a3b8;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            color: #475569;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .upload-label:hover {
+            background: #e2e8f0;
+        }
+
+        .upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 10px;
+            background: #1e293b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .upload-btn:hover {
+            background: #334155;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2>📊 Dashboard</h2>
+    <p onclick="goToPage('index.html')" class="menu-item">Immigration</p>
+    <p onclick="goToPage('workauthorization.html')" class="menu-item active">Work Authorization</p>
+    <p onclick="goToPage('employee.html')" class="menu-item">Employee's Birthday/Anniversary Alerts</p>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+
+    <h1>Work Authorization Overview</h1>
+
+    <!-- Summary + Chart Row -->
+    <div class="top-row">
+
+        <div class="summary-col">
+            <div id="summary"></div>
+        </div>
+
+        <div class="chart-col">
+            <div class="chart-box">
+                <canvas id="visaChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Table -->
+    <div class="table-box">
+        <table>
+            <thead>
+                <tr>
+                    <th>Emp ID</th>
+                    <th>Name</th>
+                    <th>Visa Type</th>
+                    <th>Visa Expiry</th>
+                    <th>ID Type</th>
+                    <th>ID Number</th>
+                    <th>ID Expiry</th>
+                    <th>Document Upload</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+let chartInstance = null;
+const PY_API = window.location.host === "127.0.0.1:8000" || window.location.host === "localhost:8000"
+    ? ""
+    : "http://127.0.0.1:8000";
+
+function goToPage(page) {
+    window.location.href = page;
+}
+
+async function loadData() {
+    try {
+        const res = await fetch(`${PY_API}/workauthorization`);
+
+        if (!res.ok) {
+            throw new Error("API not responding");
+        }
+
+        const data = await res.json();
+
+        // Summary Card
+        document.getElementById("summary").innerHTML = `
+            <div class="card">
+                <h3>Total Employees</h3>
+                <p>${data.length}</p>
+            </div>
+        `;
+
+        // PIE CHART
+        const counts = {};
+        data.forEach(emp => {
+            const visa = emp.VisaType || "Unknown";
+            counts[visa] = (counts[visa] || 0) + 1;
+        });
+
+        const ctx = document.getElementById("visaChart");
+
+        if (ctx) {
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: "pie",
+                data: {
+                    labels: Object.keys(counts),
+                    datasets: [{
+                        data: Object.values(counts),
+                        backgroundColor: [
+                            "#3b82f6",
+                            "#22c55e",
+                            "#f59e0b",
+                            "#ef4444",
+                            "#8b5cf6",
+                            "#06b6d4",
+                            "#84cc16"
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    plugins: {
+                        legend: {
+                            position: "bottom"
+                        }
+                    }
+                }
+            });
+        }
+
+        // TABLE
+        const table = document.getElementById("tableBody");
+        table.innerHTML = "";
+
+        data.forEach(emp => {
+            table.innerHTML += `
+            <tr>
+                <td>${emp.Emp_id || ""}</td>
+                <td>${emp.FirstName || ""}</td>
+                <td>${emp.VisaType || ""}</td>
+                <td>${emp.VisaExpDate || ""}</td>
+                <td>${emp.IdType || ""}</td>
+                <td>${emp.IdNumber || ""}</td>
+                <td>${emp.IdExpDate || ""}</td>
+                <td class="upload-td">
+                    <div class="upload-cell">
+                        <input type="file" id="file_${emp.Emp_id}" style="display:none"
+                            onchange="document.getElementById('fname_${emp.Emp_id}').textContent = this.files[0]?.name || 'No file chosen'">
+                        <label class="upload-label" for="file_${emp.Emp_id}">
+                            📎 Choose File
+                        </label>
+                        <span class="file-name" id="fname_${emp.Emp_id}">No file chosen</span>
+                        <button class="upload-btn" onclick="uploadFile('${emp.Emp_id}')">
+                            ⬆ Upload
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            `;
+        });
+
+    } catch (error) {
+        alert("Error: " + error.message);
+        console.error(error);
+    }
+}
+
+async function uploadFile(empId) {
+    const fileInput = document.getElementById(`file_${empId}`);
+
+    if (!fileInput.files.length) {
+        alert("Please select a file");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("emp_id", empId);
+    formData.append("file", fileInput.files[0]);
+
+    try {
+        const response = await fetch(`${PY_API}/upload-file`, {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+        alert(result.message);
+
+    } catch (error) {
+        console.error(error);
+        alert("Upload failed");
+    }
+}
+
+window.onload = loadData;
+</script>
+</body>
+</html>

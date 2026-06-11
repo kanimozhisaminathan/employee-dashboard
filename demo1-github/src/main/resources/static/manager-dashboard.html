@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manager Dashboard</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-dashboard-role="manager">
+<main class="shell">
+    <header class="topbar">
+        <div>
+            <p class="eyebrow">Manager Interface</p>
+            <h1>Team Events</h1>
+        </div>
+        <div class="header-actions">
+            <div class="status-pill" id="userBadge">Manager</div>
+            <button id="logout" type="button">Logout</button>
+        </div>
+    </header>
+    <section class="toolbar">
+        <label class="field">
+            <span>Reference date</span>
+            <input id="referenceDate" type="date">
+        </label>
+        <button id="loadEvents" type="button">Load events</button>
+        <button id="sendEmails" class="primary" type="button">Send emails</button>
+    </section>
+    <section class="summary-grid">
+        <div class="metric"><span class="metric-label">Team Events</span><strong id="totalEvents">0</strong></div>
+        <div class="metric"><span class="metric-label">Birthdays</span><strong id="birthdayCount">0</strong></div>
+        <div class="metric"><span class="metric-label">Anniversaries</span><strong id="anniversaryCount">0</strong></div>
+        <div class="metric"><span class="metric-label">Email Sent</span><strong id="sentCount">0</strong></div>
+    </section>
+    <section class="panel">
+        <div class="panel-heading">
+            <h2>Current Week Matches</h2>
+            <span id="weekLabel"></span>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Email</th><th>Event</th><th>Date</th><th>Approver</th><th>HR</th></tr></thead><tbody id="eventsTable"></tbody></table></div>
+        <div class="empty" id="emptyState">No events loaded.</div>
+    </section>
+    <section class="panel">
+        <div class="panel-heading">
+            <h2>Email Results</h2>
+            <span id="emailSummary"></span>
+        </div>
+        <div id="emailResults" class="results"></div>
+    </section>
+</main>
+<script src="/dashboard.js"></script>
+</body>
+</html>
